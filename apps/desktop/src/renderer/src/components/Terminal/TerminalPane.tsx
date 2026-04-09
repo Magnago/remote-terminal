@@ -27,6 +27,23 @@ export default function TerminalPane({ paneId, profileId, tabId, isActive }: Pro
     }
   }, [isActive]);
 
+  useEffect(() => {
+    const removeStarted = window.electronAPI?.onRemoteSessionStarted((data) => {
+      if (data.paneId === paneId) {
+        setRemoteSession({ code: data.code, url: data.url });
+      }
+    });
+    const removeStopped = window.electronAPI?.onRemoteSessionStopped((data) => {
+      if (data.paneId === paneId) {
+        setRemoteSession(null);
+      }
+    });
+    return () => {
+      removeStarted?.();
+      removeStopped?.();
+    };
+  }, [paneId]);
+
   return (
     <div
       style={{

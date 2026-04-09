@@ -31,6 +31,7 @@ export function handleDesktopConnection(ws: WebSocket, manager: SessionManager):
         const session = manager.getSession(sessionCode);
         if (!session) return;
         manager.touch(sessionCode);
+        manager.appendOutput(sessionCode, msg.payload as string);
 
         // Auto-rename from PTY title sequences in desktop output
         const oscTitle = parseOscTitle(msg.payload as string);

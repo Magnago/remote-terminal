@@ -10,9 +10,32 @@ function toWsBase(httpBase: string): string {
   return httpBase.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
 }
 
+function shouldPreferCurrentOrigin(currentOrigin: string, storedOrigin: string): boolean {
+  if (!storedOrigin) return true;
+  try {
+    const current = new URL(currentOrigin);
+    const stored = new URL(storedOrigin);
+    const currentIsRemote =
+      current.hostname !== 'localhost' &&
+      current.hostname !== '127.0.0.1' &&
+      current.port !== '3002';
+    const storedIsLocal =
+      stored.hostname === 'localhost' || stored.hostname === '127.0.0.1';
+    return currentIsRemote && storedIsLocal;
+  } catch {
+    return true;
+  }
+}
+
 export function useRelayUrl() {
   const [relayUrl, setRelayUrlState] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEY) ?? '';
+    const stored = localStorage.getItem(STORAGE_KEY) ?? '';
+    const current = normalise(window.location.origin);
+    if (shouldPreferCurrentOrigin(current, stored)) {
+      localStorage.setItem(STORAGE_KEY, current);
+      return current;
+    }
+    return stored;
   });
 
   const setRelayUrl = useCallback((url: string) => {

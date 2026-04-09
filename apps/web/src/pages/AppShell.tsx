@@ -109,33 +109,9 @@ export default function AppShell(): React.JSX.Element {
     activityTimers.current.set(code, t);
   }, []);
 
-  const createSession = async () => {
-    const nextNum = sessions.length + 1;
-    try {
-      const resp = await fetch(`${relayUrl}/api/local-session`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: `Session ${nextNum}` }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json() as { code: string };
-      setActiveCode(data.code);
-      localStorage.setItem('relay-active-code', data.code);
-    } catch (err) { console.error('[AppShell] Failed to create session:', err); }
-  };
-
-  const closeSession = async (code: string) => {
-    try { await fetch(`${relayUrl}/api/sessions/${code}`, { method: 'DELETE' }); } catch {}
-  };
-
-  const handleRename = async (code: string, newTitle: string) => {
+  const handleRename = async (code: string, _newTitle: string) => {
     setRenamingCode(null);
-    if (!newTitle.trim()) return;
-    try {
-      await fetch(`${relayUrl}/api/sessions/${code}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle.trim() }),
-      });
-    } catch {}
+    switchSession(code);
   };
 
   const requestNotifications = async () => {
@@ -166,7 +142,9 @@ export default function AppShell(): React.JSX.Element {
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {sessions.length === 0 && status === 'live' && (
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>No sessions yet</p>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
+            Open a session in the desktop app to view it here.
+          </p>
         )}
         {sessions.map((session) => {
           const isActive = session.code === activeCode;
@@ -213,26 +191,14 @@ export default function AppShell(): React.JSX.Element {
                 </span>
               )}
 
-              <span
-                onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setRenamingCode(session.code); }}
-                style={{ ...iconBtn, fontSize: 13, opacity: 0.45 }}
-                title="Rename session"
-              >✎</span>
-
-              <span
-                onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); void closeSession(session.code); }}
-                style={{ ...iconBtn, fontSize: 14 }}
-                title="Close session"
-              >×</span>
             </button>
           );
         })}
       </div>
 
-      <button onClick={() => { void createSession(); }} style={newSessionBtn}>
-        <span style={{ fontSize: 20, lineHeight: 1 }}>+</span>
-        New session
-      </button>
+      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, lineHeight: 1.5 }}>
+        Sessions are created and owned by the desktop app.
+      </div>
     </aside>
   );
 
@@ -284,7 +250,7 @@ export default function AppShell(): React.JSX.Element {
           {sessions.length === 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(255,255,255,0.3)', fontSize: 14, flexDirection: 'column', gap: 16 }}>
               <span style={{ fontSize: 32 }}>⌨</span>
-              Tap + to start a session
+              Start a session in the desktop app
             </div>
           )}
         </div>
@@ -327,27 +293,9 @@ export default function AppShell(): React.JSX.Element {
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   {session.title}
                 </span>
-                {/* Close tab */}
-                <span
-                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); void closeSession(session.code); }}
-                  style={{ fontSize: 14, opacity: 0.5, marginLeft: 2, lineHeight: 1, flexShrink: 0 }}
-                >×</span>
               </button>
             );
           })}
-          {/* New session button — always at end of tab strip */}
-          <button
-            onPointerDown={() => { void createSession(); }}
-            style={{
-              flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
-              border: '1px solid rgba(255,255,255,0.15)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.6)', fontSize: 20,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', touchAction: 'manipulation',
-            }}
-            title="New session"
-          >+</button>
         </div>
 
         {/* Full session list — bottom sheet */}

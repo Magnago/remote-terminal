@@ -9,6 +9,7 @@ interface PtyInstance {
   process: pty.IPty;
   webContentsId: number;
   relayCallbacks: Set<RelayCallback>;
+  exitCallbacks: Set<() => void>;
 }
 
 const ptyInstances = new Map<string, PtyInstance>();
@@ -31,6 +32,7 @@ export function createPty(
     process: shell,
     webContentsId: webContents.id,
     relayCallbacks: new Set(),
+    exitCallbacks: new Set(),
   };
   ptyInstances.set(payload.paneId, instance);
 
@@ -50,6 +52,8 @@ export function createPty(
     const current = ptyInstances.get(payload.paneId);
     if (current?.process !== shell) return;
 
+    current.exitCallbacks.forEach((cb) => cb());
+    current.exitCallbacks.clear();
     ptyInstances.delete(payload.paneId);
     if (!webContents.isDestroyed()) {
       const exitPayload: PtyExitPayload = { paneId: payload.paneId, exitCode };
@@ -85,6 +89,13 @@ export function addRelayCallback(paneId: string, cb: RelayCallback): () => void 
   if (!instance) return () => {};
   instance.relayCallbacks.add(cb);
   return () => instance.relayCallbacks.delete(cb);
+}
+
+export function addPtyExitCallback(paneId: string, cb: () => void): () => void {
+  const instance = ptyInstances.get(paneId);
+  if (!instance) return () => {};
+  instance.exitCallbacks.add(cb);
+  return () => instance.exitCallbacks.delete(cb);
 }
 
 export function getPtyInstance(paneId: string): PtyInstance | undefined {

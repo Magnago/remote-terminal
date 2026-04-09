@@ -21,7 +21,6 @@ foreach ($log in @($relayOut, $relayErr)) {
 }
 
 $existingRelayPids = @()
-$usingExistingRelay = $false
 try {
   $existingRelayPids = @(Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty OwningProcess -Unique)
@@ -37,8 +36,15 @@ if ($existingRelayPids.Count -gt 0) {
   } catch {}
 
   if ($healthyExistingRelay) {
-    $usingExistingRelay = $true
-    Write-Host "Reusing existing relay on port 3001 (PID(s): $($existingRelayPids -join ', '))."
+    Write-Host "Stopping existing relay on port 3001 (PID(s): $($existingRelayPids -join ', ')) so this run starts clean."
+    foreach ($procId in $existingRelayPids) {
+      try {
+        Stop-Process -Id $procId -Force -ErrorAction Stop
+      } catch {
+        Write-Warning "Could not stop relay PID $procId. Continuing."
+      }
+    }
+    Start-Sleep -Milliseconds 750
   } else {
     Write-Host "Port 3001 is already in use by PID(s): $($existingRelayPids -join ', ')"
     Write-Host "The process on 3001 is not a healthy Awesome Terminal relay."
@@ -48,28 +54,24 @@ if ($existingRelayPids.Count -gt 0) {
 }
 
 $relay = $null
-if (-not $usingExistingRelay) {
-  $relay = Start-Process -FilePath 'pnpm.cmd' `
-    -ArgumentList '--filter', '@awesome-terminal/relay', 'dev' `
-    -WorkingDirectory $root `
-    -RedirectStandardOutput $relayOut `
-    -RedirectStandardError $relayErr `
-    -PassThru
-}
+$relay = Start-Process -FilePath 'pnpm.cmd' `
+  -ArgumentList '--filter', '@awesome-terminal/relay', 'dev' `
+  -WorkingDirectory $root `
+  -RedirectStandardOutput $relayOut `
+  -RedirectStandardError $relayErr `
+  -PassThru
 
 try {
-  $healthy = $usingExistingRelay
-  if (-not $usingExistingRelay) {
-    for ($i = 0; $i -lt 60; $i++) {
-      try {
-        $health = Invoke-RestMethod -Uri 'http://127.0.0.1:3001/health' -TimeoutSec 1
-        if ($health.status -eq 'ok') {
-          $healthy = $true
-          break
-        }
-      } catch {}
-      Start-Sleep -Milliseconds 500
-    }
+  $healthy = $false
+  for ($i = 0; $i -lt 60; $i++) {
+    try {
+      $health = Invoke-RestMethod -Uri 'http://127.0.0.1:3001/health' -TimeoutSec 1
+      if ($health.status -eq 'ok') {
+        $healthy = $true
+        break
+      }
+    } catch {}
+    Start-Sleep -Milliseconds 500
   }
 
   if (-not $healthy) {
@@ -89,11 +91,7 @@ try {
     exit 1
   }
 
-  if ($usingExistingRelay) {
-    Write-Host 'Relay already running on http://127.0.0.1:3001'
-  } else {
-    Write-Host 'Relay is running on http://127.0.0.1:3001'
-  }
+  Write-Host 'Relay is running on http://127.0.0.1:3001'
 
   # ── Cloudflare Tunnel (optional — remote access from phone anywhere) ──
   $cloudflaredProc = $null

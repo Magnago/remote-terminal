@@ -3,7 +3,7 @@ import { IpcChannels } from '@awesome-terminal/shared';
 import type { RemoteSessionStartPayload, RemoteSessionStopPayload } from '@awesome-terminal/shared';
 import { WebSocket } from 'ws';
 import { customAlphabet } from 'nanoid';
-import { writeToPty, addRelayCallback } from '../pty/pty-manager';
+import { addPtyExitCallback, addRelayCallback, killPty, resizePty, writeToPty } from '../pty/pty-manager';
 import { getSettings } from '../store/settings-store';
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
@@ -11,8 +11,10 @@ const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 interface ActiveSession {
   paneId: string;
   code: string;
+  url: string;
   ws: WebSocket;
   removeRelayCallback: () => void;
+  removeExitCallback: () => void;
 }
 
 const activeSessions = new Map<string, ActiveSession>();
@@ -55,9 +57,7 @@ export async function startRemoteSession(
 ): Promise<{ success: boolean; code?: string; url?: string; error?: string }> {
   const existing = activeSessions.get(paneId);
   if (existing) {
-    existing.ws.close();
-    existing.removeRelayCallback();
-    activeSessions.delete(paneId);
+    return { success: true, code: existing.code, url: existing.url };
   }
 
   const code = nanoid();
@@ -85,6 +85,10 @@ export async function startRemoteSession(
         const msg = JSON.parse(raw.toString());
         if (msg.type === 'data') {
           writeToPty(paneId, msg.payload);
+        } else if (msg.type === 'resize') {
+          resizePty(paneId, msg.cols, msg.rows);
+        } else if (msg.type === 'terminate') {
+          killPty(paneId);
         }
       } catch {}
     });
@@ -94,13 +98,26 @@ export async function startRemoteSession(
         ws.send(JSON.stringify({ type: 'data', payload: data }));
       }
     });
+    const removeExitCallback = addPtyExitCallback(paneId, () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    });
 
     ws.on('close', () => {
       removeRelayCallback();
+      removeExitCallback();
       activeSessions.delete(paneId);
     });
 
-    activeSessions.set(paneId, { paneId, code, ws, removeRelayCallback });
+    activeSessions.set(paneId, {
+      paneId,
+      code,
+      url: relayEndpoints.browserUrl,
+      ws,
+      removeRelayCallback,
+      removeExitCallback,
+    });
     return { success: true, code, url: relayEndpoints.browserUrl };
   } catch (err) {
     return { success: false, error: String(err) };
@@ -111,6 +128,7 @@ export async function stopRemoteSession(paneId: string): Promise<void> {
   const session = activeSessions.get(paneId);
   if (session) {
     session.removeRelayCallback();
+    session.removeExitCallback();
     session.ws.close();
     activeSessions.delete(paneId);
   }

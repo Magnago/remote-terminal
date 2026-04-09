@@ -132,6 +132,15 @@ export function registerTerminalIpc(win: BrowserWindow): void {
     const profile = profiles.find((p) => p.id === payload.profileId) || profiles[0];
     if (!profile) return;
     createPty(payload, win.webContents, profile.executable, profile.args || []);
+    void startRemoteSession(payload.paneId).then((result) => {
+      if (result.success && result.code && result.url) {
+        win.webContents.send(IpcChannels.REMOTE_SESSION_STARTED, {
+          paneId: payload.paneId,
+          code: result.code,
+          url: result.url,
+        });
+      }
+    });
     return { success: true };
   });
 
@@ -145,6 +154,7 @@ export function registerTerminalIpc(win: BrowserWindow): void {
 
   ipcMain.on(IpcChannels.PTY_KILL, (_event, payload: PtyKillPayload) => {
     commandCaptureByPane.delete(payload.paneId);
+    void stopRemoteSession(payload.paneId);
     killPty(payload.paneId);
   });
 }
