@@ -139,7 +139,7 @@ export function useTerminal({
     });
     const removeTerminateListener = window.electronAPI?.onRemoteSessionTerminated((payload) => {
       if (payload.paneId === paneId) {
-        closePane(paneId);
+        closePane(paneId, { skipPtyKill: true });
       }
     });
 

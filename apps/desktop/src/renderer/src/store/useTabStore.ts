@@ -16,11 +16,11 @@ interface TabState {
   setActivePaneId: (tabId: string, paneId: string) => void;
   setTabTitle: (tabId: string, title: string) => void;
   splitActivePane: (direction: 'horizontal' | 'vertical') => void;
-  closePane: (paneId: string) => void;
+  closePane: (paneId: string, options?: { skipPtyKill?: boolean }) => void;
 }
 
 export const useTabStore = create<TabState>()(
-  immer((set, get) => ({
+  immer((set) => ({
     tabs: [],
     activeTabId: null,
     profiles: [],
@@ -57,7 +57,6 @@ export const useTabStore = create<TabState>()(
         const idx = state.tabs.findIndex((t) => t.id === tabId);
         if (idx === -1) return;
 
-        // Kill all panes in this tab
         const tab = state.tabs[idx];
         const paneIds = getAllPaneIds(tab.paneTree);
         paneIds.forEach((paneId) => {
@@ -67,8 +66,7 @@ export const useTabStore = create<TabState>()(
         state.tabs.splice(idx, 1);
 
         if (state.activeTabId === tabId) {
-          state.activeTabId =
-            state.tabs[Math.min(idx, state.tabs.length - 1)]?.id ?? null;
+          state.activeTabId = state.tabs[Math.min(idx, state.tabs.length - 1)]?.id ?? null;
         }
       }),
 
@@ -100,34 +98,35 @@ export const useTabStore = create<TabState>()(
           state.profiles[0]?.id ||
           'powershell5';
 
-        const newTree = splitPane(
-          tab.paneTree,
-          tab.activePaneId,
-          direction,
-          profileId
-        );
+        const newTree = splitPane(tab.paneTree, tab.activePaneId, direction, profileId);
         tab.paneTree = newTree;
       }),
 
-    closePane: (paneId) =>
+    closePane: (paneId, options) =>
       set((state) => {
-        const tab = state.tabs.find((t) => t.id === state.activeTabId);
+        const tab = state.tabs.find((candidate) =>
+          getAllPaneIds(candidate.paneTree).includes(paneId)
+        );
         if (!tab) return;
 
-        window.electronAPI?.ptyKill({ paneId });
+        if (!options?.skipPtyKill) {
+          window.electronAPI?.ptyKill({ paneId });
+        }
 
         const newTree = removePane(tab.paneTree, paneId);
         if (!newTree) {
-          // Last pane closed — close the tab
-          const idx = state.tabs.findIndex((t) => t.id === state.activeTabId);
+          const idx = state.tabs.findIndex((t) => t.id === tab.id);
           state.tabs.splice(idx, 1);
-          state.activeTabId = state.tabs[Math.max(0, idx - 1)]?.id ?? null;
-        } else {
-          tab.paneTree = newTree;
-          if (tab.activePaneId === paneId) {
-            const first = newTree.kind === 'terminal' ? newTree.paneId : getAllPaneIds(newTree)[0];
-            tab.activePaneId = first;
+          if (state.activeTabId === tab.id) {
+            state.activeTabId = state.tabs[Math.min(idx, state.tabs.length - 1)]?.id ?? null;
           }
+          return;
+        }
+
+        tab.paneTree = newTree;
+        if (tab.activePaneId === paneId) {
+          tab.activePaneId =
+            newTree.kind === 'terminal' ? newTree.paneId : getAllPaneIds(newTree)[0];
         }
       }),
   }))

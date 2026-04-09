@@ -18,6 +18,7 @@ interface ActiveSession {
 }
 
 const activeSessions = new Map<string, ActiveSession>();
+let mainWindow: BrowserWindow | null = null;
 
 async function deleteRelaySession(code: string): Promise<void> {
   const configuredRelayUrl =
@@ -42,6 +43,8 @@ function getRelayEndpoints(code: string): { browserUrl: string; desktopWsUrl: st
 }
 
 export function registerRemoteSessionIpc(_win: BrowserWindow): void {
+  mainWindow = _win;
+
   ipcMain.handle(IpcChannels.REMOTE_SESSION_START, async (_event, payload: RemoteSessionStartPayload) => {
     const result = await startRemoteSession(payload.paneId);
     if (result.success && result.code && result.url) {
@@ -137,8 +140,8 @@ export async function startRemoteSession(
         } else if (msg.type === 'resize') {
           resizePty(paneId, msg.cols, msg.rows);
         } else if (msg.type === 'terminate') {
-          if (!_win.webContents.isDestroyed()) {
-            _win.webContents.send(IpcChannels.REMOTE_SESSION_TERMINATED, { paneId });
+          if (mainWindow && !mainWindow.webContents.isDestroyed()) {
+            mainWindow.webContents.send(IpcChannels.REMOTE_SESSION_TERMINATED, { paneId });
           }
           killPty(paneId);
         }
