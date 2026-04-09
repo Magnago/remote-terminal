@@ -1,0 +1,26 @@
+{
+  "name": "Awesome Terminal",
+  "short_name": "Terminal",
+  "description": "Mobile terminal client — synced with your desktop",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e0e16",
+  "theme_color": "#0e0e16",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["developer", "productivity"],
+  "prefer_related_applications": false
+}

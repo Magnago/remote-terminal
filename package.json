@@ -1,0 +1,24 @@
+{
+  "name": "awesome-terminal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
+    "dev:all": "turbo run dev",
+    "build": "turbo run build",
+    "test": "pnpm --filter @awesome-terminal/relay test",
+    "lint": "turbo run lint",
+    "dev:desktop": "pnpm --filter @awesome-terminal/desktop dev",
+    "dev:relay": "pnpm --filter @awesome-terminal/relay dev",
+    "dev:web": "pnpm --filter @awesome-terminal/web dev",
+    "build:desktop": "pnpm --filter @awesome-terminal/desktop build",
+    "postinstall": "electron-rebuild -f -w node-pty --module-dir apps/desktop"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "electron-rebuild": "^3.2.9"
+  }
+}
