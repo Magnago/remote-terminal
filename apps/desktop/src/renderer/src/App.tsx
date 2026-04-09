@@ -24,7 +24,13 @@ export default function App(): React.JSX.Element {
     const removeListener = window.electronAPI?.onSettingsChanged((settings) => {
       useSettingsStore.setState({ settings });
     });
-    return removeListener;
+    const removeCreateListener = window.electronAPI?.onDesktopSessionCreate(() => {
+      useTabStore.getState().addTab();
+    });
+    return () => {
+      removeListener?.();
+      removeCreateListener?.();
+    };
   }, [loadSettings, setProfiles]);
 
   return (

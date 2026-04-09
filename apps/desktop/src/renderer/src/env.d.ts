@@ -22,6 +22,8 @@ declare global {
       remoteSessionStop: (paneId: string) => Promise<{ success: boolean }>;
       onRemoteSessionStarted: (callback: (data: { paneId: string; code: string; url: string }) => void) => (() => void) | undefined;
       onRemoteSessionStopped: (callback: (data: { paneId: string }) => void) => (() => void) | undefined;
+      onRemoteSessionTerminated: (callback: (data: { paneId: string }) => void) => (() => void) | undefined;
+      onDesktopSessionCreate: (callback: () => void) => (() => void) | undefined;
     };
   }
 }

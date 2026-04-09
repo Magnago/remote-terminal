@@ -23,6 +23,7 @@ const sessionManager = new SessionManager();
 
 // Control clients — receive session list broadcasts
 const controlClients = new Set<WebSocket>();
+const desktopControlClients = new Set<WebSocket>();
 
 const broadcastSessions = () => {
   const sessions = sessionManager.getSessions();
@@ -64,6 +65,16 @@ app.post('/api/local-session', (req, res) => {
   res.json({ code, title: sessionManager.getSession(code)!.title, url: `http://localhost:${PORT}/session/${code}` });
 });
 
+app.post('/api/desktop-session', (_req, res) => {
+  const desktopClient = Array.from(desktopControlClients).find((ws) => ws.readyState === WebSocket.OPEN);
+  if (!desktopClient) {
+    res.status(503).json({ error: 'Desktop app is not connected' });
+    return;
+  }
+  desktopClient.send(JSON.stringify({ type: 'create-session' }));
+  res.status(202).json({ accepted: true });
+});
+
 // Rename a session
 app.patch('/api/sessions/:code', (req, res) => {
   const { title } = req.body as { title?: string };
@@ -85,6 +96,9 @@ app.delete('/api/sessions/:code', (req, res) => {
     if (ws.readyState === WebSocket.OPEN)
       ws.send(JSON.stringify({ type: 'desktop-disconnected' }));
   });
+  if (session.desktopSocket?.readyState === WebSocket.OPEN) {
+    session.desktopSocket.send(JSON.stringify({ type: 'terminate' }));
+  }
   sessionManager.deleteSession(req.params.code);
   res.sendStatus(204);
 });
@@ -118,6 +132,10 @@ wss.on('connection', (ws, req) => {
 
   if (url.startsWith('/desktop')) {
     handleDesktopConnection(ws, sessionManager);
+  } else if (url.startsWith('/control/desktop')) {
+    desktopControlClients.add(ws);
+    ws.on('close', () => desktopControlClients.delete(ws));
+    ws.on('error', () => desktopControlClients.delete(ws));
   } else if (url.startsWith('/browser')) {
     handleBrowserConnection(ws, req, sessionManager);
   } else if (url.startsWith('/control')) {

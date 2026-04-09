@@ -120,6 +120,12 @@ export default function AppShell(): React.JSX.Element {
     } catch {}
   }, [relayUrl]);
 
+  const createSession = useCallback(async () => {
+    try {
+      await fetch(`${relayUrl}/api/desktop-session`, { method: 'POST' });
+    } catch {}
+  }, [relayUrl]);
+
   const requestNotifications = async () => {
     if (typeof Notification === 'undefined') return;
     setNotifPerm(await Notification.requestPermission());
@@ -238,6 +244,7 @@ export default function AppShell(): React.JSX.Element {
                 {notifPerm === 'granted' ? '🔔' : '🔕'}
               </button>
             )}
+            <button onClick={() => { void createSession(); }} style={{ ...iconBtn, fontSize: 20, padding: '2px 6px' }} title="New session">+</button>
             <button onClick={() => setSidebarOpen(true)} style={{ ...iconBtn, fontSize: 22, padding: '2px 6px' }} title="All sessions">≡</button>
           </div>
         )}
@@ -313,6 +320,18 @@ export default function AppShell(): React.JSX.Element {
               </button>
             );
           })}
+          <button
+            onPointerDown={() => { void createSession(); }}
+            style={{
+              flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.06)',
+              color: 'rgba(255,255,255,0.6)', fontSize: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', touchAction: 'manipulation',
+            }}
+            title="New session"
+          >+</button>
         </div>
 
         {/* Full session list — bottom sheet */}

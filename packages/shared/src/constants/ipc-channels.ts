@@ -24,6 +24,8 @@ export const IpcChannels = {
   REMOTE_SESSION_STOP: 'remote-session:stop',
   REMOTE_SESSION_STARTED: 'remote-session:started',
   REMOTE_SESSION_STOPPED: 'remote-session:stopped',
+  REMOTE_SESSION_TERMINATED: 'remote-session:terminated',
+  DESKTOP_SESSION_CREATE: 'desktop-session:create',
 
   // Shell profiles
   GET_PROFILES: 'profiles:get',

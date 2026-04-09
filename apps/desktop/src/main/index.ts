@@ -4,7 +4,7 @@ import { createWindow } from './window';
 import { registerTerminalIpc } from './ipc/terminal.ipc';
 import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerProfilesIpc } from './ipc/profiles.ipc';
-import { registerRemoteSessionIpc } from './ipc/remote-session.ipc';
+import { registerDesktopControlClient, registerRemoteSessionIpc } from './ipc/remote-session.ipc';
 import { IpcChannels } from '@awesome-terminal/shared';
 
 // Disable hardware acceleration temporarily to avoid blank window issues
@@ -17,6 +17,7 @@ app.whenReady().then(async () => {
   registerSettingsIpc(win);
   registerProfilesIpc();
   registerRemoteSessionIpc(win);
+  registerDesktopControlClient(win);
 
   // Window control IPC
   ipcMain.on(IpcChannels.WINDOW_MINIMIZE, () => win.minimize());

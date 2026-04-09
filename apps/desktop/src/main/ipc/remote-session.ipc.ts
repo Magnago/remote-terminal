@@ -61,6 +61,46 @@ export function registerRemoteSessionIpc(_win: BrowserWindow): void {
   });
 }
 
+export function registerDesktopControlClient(win: BrowserWindow): void {
+  const configuredRelayUrl =
+    process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
+  const relayUrl = new URL(configuredRelayUrl);
+  const wsProtocol = relayUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+
+  let reconnectTimer: NodeJS.Timeout | null = null;
+  let stopped = false;
+
+  const connect = () => {
+    if (stopped) return;
+    const ws = new WebSocket(`${wsProtocol}//${relayUrl.host}/control/desktop`);
+
+    ws.on('message', (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+        if (msg.type === 'create-session' && !win.webContents.isDestroyed()) {
+          win.webContents.send(IpcChannels.DESKTOP_SESSION_CREATE);
+        }
+      } catch {}
+    });
+
+    ws.on('close', () => {
+      if (stopped) return;
+      reconnectTimer = setTimeout(connect, 2000);
+    });
+
+    ws.on('error', () => {
+      ws.close();
+    });
+  };
+
+  connect();
+
+  win.on('closed', () => {
+    stopped = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+  });
+}
+
 export async function startRemoteSession(
   paneId: string,
 ): Promise<{ success: boolean; code?: string; url?: string; error?: string }> {
@@ -97,6 +137,9 @@ export async function startRemoteSession(
         } else if (msg.type === 'resize') {
           resizePty(paneId, msg.cols, msg.rows);
         } else if (msg.type === 'terminate') {
+          if (!_win.webContents.isDestroyed()) {
+            _win.webContents.send(IpcChannels.REMOTE_SESSION_TERMINATED, { paneId });
+          }
           killPty(paneId);
         }
       } catch {}

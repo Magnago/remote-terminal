@@ -86,6 +86,16 @@ const api = {
     ipcRenderer.on(IpcChannels.REMOTE_SESSION_STOPPED, listener);
     return () => ipcRenderer.removeListener(IpcChannels.REMOTE_SESSION_STOPPED, listener);
   },
+  onRemoteSessionTerminated: (callback: (data: { paneId: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: { paneId: string }) => callback(data);
+    ipcRenderer.on(IpcChannels.REMOTE_SESSION_TERMINATED, listener);
+    return () => ipcRenderer.removeListener(IpcChannels.REMOTE_SESSION_TERMINATED, listener);
+  },
+  onDesktopSessionCreate: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on(IpcChannels.DESKTOP_SESSION_CREATE, listener);
+    return () => ipcRenderer.removeListener(IpcChannels.DESKTOP_SESSION_CREATE, listener);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

@@ -29,6 +29,7 @@ export function useTerminal({
   const terminalSettings = useSettingsStore((s) => s.settings?.terminal);
   const setTabTitle = useTabStore((s) => s.setTabTitle);
   const setActivePaneId = useTabStore((s) => s.setActivePaneId);
+  const closePane = useTabStore((s) => s.closePane);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -136,6 +137,11 @@ export function useTerminal({
         term.writeln('\r\n\x1b[2m[Process exited]\x1b[0m');
       }
     });
+    const removeTerminateListener = window.electronAPI?.onRemoteSessionTerminated((payload) => {
+      if (payload.paneId === paneId) {
+        closePane(paneId);
+      }
+    });
 
     // Track focus at the container level since this xterm build does not expose term.onFocus().
     const focusTarget = containerRef.current;
@@ -158,12 +164,13 @@ export function useTerminal({
     return () => {
       removeDataListener?.();
       removeExitListener?.();
+      removeTerminateListener?.();
       focusTarget?.removeEventListener('focusin', handleFocusIn);
       resizeObserver.disconnect();
       term.dispose();
       window.electronAPI?.ptyKill({ paneId });
     };
-  }, [paneId, profileId]);
+  }, [closePane, paneId, profileId]);
 
   useEffect(() => {
     const term = termRef.current;
