@@ -1,6 +1,6 @@
-# Awesome Terminal
+# Remote Terminal
 
-Awesome Terminal is a pnpm workspace with three apps:
+Remote Terminal is a pnpm workspace with three apps:
 
 - An Electron desktop terminal built with React, `xterm.js`, and `node-pty`
 - A relay server that exposes terminal sessions over WebSocket and HTTP
