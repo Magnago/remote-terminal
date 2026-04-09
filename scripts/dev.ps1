@@ -61,6 +61,7 @@ $relay = Start-Process -FilePath 'pnpm.cmd' `
   -WorkingDirectory $root `
   -RedirectStandardOutput $relayOut `
   -RedirectStandardError $relayErr `
+  -WindowStyle Hidden `
   -PassThru
 
 try {
@@ -112,6 +113,7 @@ try {
       -ArgumentList 'tunnel', '--url', 'http://localhost:3001', '--protocol', 'http2', '--no-autoupdate' `
       -RedirectStandardOutput $cloudflaredOut `
       -RedirectStandardError $cloudflaredErr `
+      -WindowStyle Hidden `
       -PassThru
 
     $tunnelUrl = $null

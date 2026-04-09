@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTerminal } from '../../hooks/useTerminal';
-import RemoteSessionBanner from './RemoteSessionBanner';
 
 interface Props {
   paneId: string;
@@ -59,20 +58,10 @@ export default function TerminalPane({ paneId, profileId, tabId, isActive }: Pro
         onClick={() => termRef.current?.focus()}
         style={{
           width: '100%',
-          height: remoteSession ? 'calc(100% - 48px)' : '100%',
+          height: '100%',
           padding: '4px 0 0 4px',
         }}
       />
-      {remoteSession && (
-        <RemoteSessionBanner
-          code={remoteSession.code}
-          url={remoteSession.url}
-          onDismiss={() => {
-            window.electronAPI?.remoteSessionStop(paneId);
-            setRemoteSession(null);
-          }}
-        />
-      )}
     </div>
   );
 }
