@@ -19,6 +19,15 @@ interface ActiveSession {
 
 const activeSessions = new Map<string, ActiveSession>();
 
+async function deleteRelaySession(code: string): Promise<void> {
+  const configuredRelayUrl =
+    process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
+  const relayUrl = new URL(configuredRelayUrl);
+  try {
+    await fetch(`${relayUrl.origin}/api/sessions/${code}`, { method: 'DELETE' });
+  } catch {}
+}
+
 function getRelayEndpoints(code: string): { browserUrl: string; desktopWsUrl: string } {
   const configuredRelayUrl =
     process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
@@ -99,9 +108,7 @@ export async function startRemoteSession(
       }
     });
     const removeExitCallback = addPtyExitCallback(paneId, () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      void stopRemoteSession(paneId);
     });
 
     ws.on('close', () => {
@@ -129,6 +136,7 @@ export async function stopRemoteSession(paneId: string): Promise<void> {
   if (session) {
     session.removeRelayCallback();
     session.removeExitCallback();
+    await deleteRelaySession(session.code);
     session.ws.close();
     activeSessions.delete(paneId);
   }

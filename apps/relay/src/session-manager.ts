@@ -13,6 +13,7 @@ export interface Session {
   localPty?: IPty;
   /** Rolling buffer of recent PTY output — replayed to browsers that connect late. */
   outputBuffer: string;
+  outputVersion: number;
 }
 
 export { OUTPUT_BUFFER_MAX };
@@ -56,6 +57,7 @@ export class SessionManager {
       createdAt: Date.now(),
       lastActivity: Date.now(),
       outputBuffer: '',
+      outputVersion: 0,
     };
     this.sessions.set(code, session);
     this.scheduleExpiry(code);
@@ -88,13 +90,15 @@ export class SessionManager {
     this.notifyChange();
   }
 
-  appendOutput(code: string, data: string): void {
+  appendOutput(code: string, data: string): number {
     const session = this.sessions.get(code);
-    if (!session) return;
+    if (!session) return 0;
     session.outputBuffer += cleanForReplay(data);
     if (session.outputBuffer.length > OUTPUT_BUFFER_MAX) {
       session.outputBuffer = session.outputBuffer.slice(session.outputBuffer.length - OUTPUT_BUFFER_MAX);
     }
+    session.outputVersion += 1;
+    return session.outputVersion;
   }
 
   touch(code: string): void {

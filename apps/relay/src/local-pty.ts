@@ -72,11 +72,11 @@ export function spawnLocalPty(code: string, manager: SessionManager): { kill: ()
   const broadcast = (data: string) => {
     const s = manager.getSession(code);
     if (!s) return;
-    manager.appendOutput(code, data);
+    const version = manager.appendOutput(code, data);
     // Auto-rename session from PTY title escape sequences
     const title = parseOscTitle(data);
     if (title) manager.updateTitle(code, title);
-    const frame = JSON.stringify({ type: 'data', payload: data });
+    const frame = JSON.stringify({ type: 'data', payload: data, version });
     s.browserSockets.forEach((ws) => {
       if (ws.readyState === WebSocket.OPEN) ws.send(frame);
     });

@@ -31,14 +31,14 @@ export function handleDesktopConnection(ws: WebSocket, manager: SessionManager):
         const session = manager.getSession(sessionCode);
         if (!session) return;
         manager.touch(sessionCode);
-        manager.appendOutput(sessionCode, msg.payload as string);
+        const version = manager.appendOutput(sessionCode, msg.payload as string);
 
         // Auto-rename from PTY title sequences in desktop output
         const oscTitle = parseOscTitle(msg.payload as string);
         if (oscTitle) manager.updateTitle(sessionCode, oscTitle);
 
         // Broadcast terminal output to all browser clients
-        const frame = JSON.stringify({ type: 'data', payload: msg.payload });
+        const frame = JSON.stringify({ type: 'data', payload: msg.payload, version });
         session.browserSockets.forEach((browserWs) => {
           if (browserWs.readyState === WebSocket.OPEN) {
             browserWs.send(frame);
@@ -91,7 +91,7 @@ export function handleBrowserConnection(
     // Use 'replay' (not 'data') so clients know to reset before writing,
     // preventing duplicate output on reconnect.
     if (session.outputBuffer) {
-      ws.send(JSON.stringify({ type: 'replay', payload: session.outputBuffer }));
+      ws.send(JSON.stringify({ type: 'replay', payload: session.outputBuffer, version: session.outputVersion }));
     }
   } else {
     ws.send(JSON.stringify({ type: 'waiting-for-desktop' }));

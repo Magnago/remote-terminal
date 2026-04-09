@@ -114,6 +114,12 @@ export default function AppShell(): React.JSX.Element {
     switchSession(code);
   };
 
+  const closeSession = useCallback(async (code: string) => {
+    try {
+      await fetch(`${relayUrl}/api/sessions/${code}`, { method: 'DELETE' });
+    } catch {}
+  }, [relayUrl]);
+
   const requestNotifications = async () => {
     if (typeof Notification === 'undefined') return;
     setNotifPerm(await Notification.requestPermission());
@@ -191,6 +197,12 @@ export default function AppShell(): React.JSX.Element {
                 </span>
               )}
 
+              <span
+                onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); void closeSession(session.code); }}
+                style={{ ...iconBtn, fontSize: 16 }}
+                title="Close session"
+              >×</span>
+
             </button>
           );
         })}
@@ -244,6 +256,7 @@ export default function AppShell(): React.JSX.Element {
                 wsBase={wsBase}
                 active={session.code === activeCode}
                 onActivity={() => handleActivity(session.code)}
+                onExit={() => { void closeSession(session.code); }}
               />
             </div>
           ))}
@@ -293,6 +306,10 @@ export default function AppShell(): React.JSX.Element {
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   {session.title}
                 </span>
+                <span
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); void closeSession(session.code); }}
+                  style={{ fontSize: 14, opacity: 0.6, marginLeft: 2, lineHeight: 1, flexShrink: 0 }}
+                >×</span>
               </button>
             );
           })}
@@ -335,6 +352,7 @@ export default function AppShell(): React.JSX.Element {
                       wsBase={wsBase}
                       active={session.code === activeCode}
                       onActivity={() => handleActivity(session.code)}
+                      onExit={() => { void closeSession(session.code); }}
                     />
                   </div>
                 ))}
@@ -355,11 +373,4 @@ const iconBtn: React.CSSProperties = {
   background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
   cursor: 'pointer', borderRadius: 6, padding: '4px 6px',
   touchAction: 'manipulation', userSelect: 'none', WebkitUserSelect: 'none', flexShrink: 0,
-};
-
-const newSessionBtn: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  gap: 8, border: 'none', borderRadius: 999, background: '#d6895b',
-  color: '#fff8f2', cursor: 'pointer', height: 44, padding: '0 20px',
-  fontWeight: 600, fontSize: 15, touchAction: 'manipulation', flexShrink: 0,
 };

@@ -33,16 +33,9 @@ const KEY_MAP: Record<string, string> = {
 const TOOLBAR_BUTTONS: Array<{ label: string; payload: string; title: string }> = [
   { label: 'Tab',    payload: '\t',     title: 'Tab' },
   { label: 'Esc',    payload: '\x1b',   title: 'Escape' },
-  { label: '↑',      payload: '\x1b[A', title: 'Arrow Up' },
-  { label: '↓',      payload: '\x1b[B', title: 'Arrow Down' },
-  { label: '←',      payload: '\x1b[D', title: 'Arrow Left' },
-  { label: '→',      payload: '\x1b[C', title: 'Arrow Right' },
-  { label: '~',      payload: '~',      title: 'Tilde' },
-  { label: '|',      payload: '|',      title: 'Pipe' },
-  { label: '/',      payload: '/',      title: 'Slash' },
+  { label: '↑',      payload: '\x1b[A', title: 'Previous command' },
+  { label: '↓',      payload: '\x1b[B', title: 'Next command' },
   { label: 'Ctrl+C', payload: '\x03',   title: 'Ctrl+C (interrupt)' },
-  { label: 'Ctrl+L', payload: '\x0c',   title: 'Ctrl+L (clear screen)' },
-  { label: 'Ctrl+D', payload: '\x04',   title: 'Ctrl+D (EOF / exit)' },
 ];
 
 const haptic = () => navigator.vibrate?.(8);
@@ -58,12 +51,11 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
   const termRef         = useRef<Terminal | null>(null);
   const fitAddonRef     = useRef<FitAddon | null>(null);
   const wsRef           = useRef<WebSocket | null>(null);
-  const ctrlActiveRef   = useRef(false);
-  const ctrlBtnRef      = useRef<HTMLButtonElement | null>(null);
   const unmountedRef    = useRef(false);
   const reconnTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onActivityRef   = useRef(onActivity);
   const lastActivityRef = useRef(0);
+  const maxSeenVersionRef = useRef(0);
   // #2: track scroll position without React re-render lag
   const atBottomRef     = useRef(true);
   useEffect(() => { onActivityRef.current = onActivity; }, [onActivity]);
@@ -82,14 +74,6 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
-
-  const setCtrlActive = (on: boolean) => {
-    ctrlActiveRef.current = on;
-    if (ctrlBtnRef.current) {
-      ctrlBtnRef.current.style.background = on ? '#d6895b' : 'rgba(255,255,255,0.08)';
-      ctrlBtnRef.current.style.color = on ? '#0e0e16' : '#e0e0e0';
-    }
-  };
 
   useEffect(() => {
     if (active) {
@@ -117,7 +101,9 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
       cursorBlink: true,
       scrollback: 5000,
       convertEol: false,
-      smoothScrollDuration: 100,
+      smoothScrollDuration: 180,
+      scrollSensitivity: 0.85,
+      fastScrollSensitivity: 2,
     });
 
     const fitAddon = new FitAddon();
@@ -188,6 +174,7 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
       if (unmountedRef.current) return;
       // Reset so reconnects accept the replay buffer from the relay
       hasReceivedContent = false;
+      maxSeenVersionRef.current = 0;
       const ws = new WebSocket(`${wsBase}/browser?code=${code}`);
       wsRef.current = ws;
 
@@ -205,18 +192,23 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data as string) as { type: string; payload?: string };
+          const msg = JSON.parse(event.data as string) as { type: string; payload?: string; version?: number };
           if (msg.type === 'replay' && msg.payload) {
             if (!hasReceivedContent) {
               term.reset();
               term.write(msg.payload);
               hasReceivedContent = true;
+              maxSeenVersionRef.current = Math.max(maxSeenVersionRef.current, msg.version ?? 0);
               // Always scroll to bottom after replay
               term.scrollToBottom();
               atBottomRef.current = true;
               setAtBottom(true);
             }
           } else if (msg.type === 'data' && msg.payload) {
+            if ((msg.version ?? 0) <= maxSeenVersionRef.current) {
+              return;
+            }
+            maxSeenVersionRef.current = Math.max(maxSeenVersionRef.current, msg.version ?? 0);
             hasReceivedContent = true;
             term.write(msg.payload);
             checkForPrompt(msg.payload);
@@ -277,16 +269,6 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
       const deletedCount = lastValue.length - i;
       const inserted = newValue.slice(i);
 
-      if (ctrlActiveRef.current && inserted) {
-        const char = inserted[0].toUpperCase();
-        const ctrl = char.charCodeAt(0) - 64;
-        send(ctrl > 0 && ctrl < 32 ? String.fromCharCode(ctrl) : inserted);
-        setCtrlActive(false);
-        textarea.value = '';
-        lastValue = '';
-        return;
-      }
-
       if (deletedCount > 0) send('\x7f'.repeat(deletedCount));
       if (inserted) send(inserted);
       lastValue = newValue;
@@ -301,7 +283,6 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
       const seq = KEY_MAP[e.key];
       if (seq) {
         e.preventDefault();
-        if (ctrlActiveRef.current) setCtrlActive(false);
         send(seq);
         if (e.key === 'Enter' || e.key === 'Escape') {
           const ta = keyboardRef.current;
@@ -432,12 +413,6 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, wsBase]);
-
-  const toggleCtrl = () => {
-    haptic();
-    setCtrlActive(!ctrlActiveRef.current);
-    keyboardRef.current?.focus({ preventScroll: true });
-  };
 
   const sendPayload = (payload: string) => {
     haptic();
@@ -582,15 +557,6 @@ export default function MobileTerminal({ code, title, wsBase, active, onActivity
       >
         {/* Scrollable strip */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, padding: '0 6px', overflowX: 'auto' }}>
-          {/* Ctrl toggle */}
-          <button
-            ref={ctrlBtnRef}
-            onPointerDown={(e) => { e.preventDefault(); toggleCtrl(); }}
-            style={{ ...btnStyle(btnHeight, btnFontSz), minWidth: 44 }}
-            title="Ctrl modifier — tap then a key"
-          >
-            Ctrl
-          </button>
           {TOOLBAR_BUTTONS.map(({ label, payload, title: btnTitle }) => (
             <button
               key={label}
