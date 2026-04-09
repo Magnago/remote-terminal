@@ -3,8 +3,10 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $relayOut = Join-Path $root '.dev-relay.out.log'
 $relayErr = Join-Path $root '.dev-relay.err.log'
+$cloudflaredOut = Join-Path $root '.dev-cloudflared.out.log'
+$cloudflaredErr = Join-Path $root '.dev-cloudflared.err.log'
 
-foreach ($log in @($relayOut, $relayErr)) {
+foreach ($log in @($relayOut, $relayErr, $cloudflaredOut, $cloudflaredErr)) {
   if (Test-Path $log) {
     try {
       Remove-Item -LiteralPath $log -Force -ErrorAction Stop
@@ -107,10 +109,38 @@ try {
     Write-Host ''
     Write-Host 'Starting Cloudflare Tunnel for remote mobile access...'
     $cloudflaredProc = Start-Process -FilePath $cloudflaredExe `
-      -ArgumentList 'tunnel', '--url', 'http://localhost:3001' `
-      -PassThru -NoNewWindow
-    Write-Host '  Tunnel starting - public URL will be printed above (look for trycloudflare.com)'
-    Write-Host '  Enter that URL in the mobile app settings to connect from anywhere.'
+      -ArgumentList 'tunnel', '--url', 'http://localhost:3001', '--protocol', 'http2', '--no-autoupdate' `
+      -RedirectStandardOutput $cloudflaredOut `
+      -RedirectStandardError $cloudflaredErr `
+      -PassThru
+
+    $tunnelUrl = $null
+    for ($i = 0; $i -lt 20; $i++) {
+      $cloudflaredLines = @()
+      if (Test-Path $cloudflaredOut) { $cloudflaredLines += Get-Content $cloudflaredOut }
+      if (Test-Path $cloudflaredErr) { $cloudflaredLines += Get-Content $cloudflaredErr }
+      $match = $cloudflaredLines |
+        Select-String -Pattern 'https://[-a-z0-9]+\.trycloudflare\.com' |
+        Select-Object -First 1
+
+      if ($match) {
+        $tunnelUrl = $match.Matches[0].Value
+        break
+      }
+
+      if ($cloudflaredProc.HasExited) {
+        break
+      }
+
+      Start-Sleep -Seconds 1
+    }
+
+    if ($tunnelUrl) {
+      Write-Host "  Tunnel URL: $tunnelUrl"
+      Write-Host '  Use that URL on mobile to connect from anywhere.'
+    } else {
+      Write-Warning 'Cloudflare tunnel did not produce a URL yet. Check .dev-cloudflared.err.log if mobile access is not working.'
+    }
   } else {
     Write-Host ''
     Write-Host 'Tip: install cloudflared for remote mobile access from anywhere:'
