@@ -98,7 +98,7 @@ The web app supports:
 
 ## Remote Sessions
 
-From the desktop app, start a remote session and open the generated browser URL. The desktop app uses the configured relay URL from settings, or `AWESOME_TERMINAL_RELAY_URL` if that environment variable is set.
+From the desktop app, start a remote session and open the generated browser URL. The desktop app uses the configured relay URL from settings, or `REMOTE_TERMINAL_RELAY_URL` if that environment variable is set.
 
 The helper script below starts the relay, launches the desktop app, and optionally opens a Cloudflare tunnel when `cloudflared` is installed:
 

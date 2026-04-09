@@ -8,7 +8,7 @@ const desktopPkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), '
 const allDeps = [
   ...Object.keys(desktopPkg.dependencies || {}),
   ...Object.keys(desktopPkg.devDependencies || {}),
-].filter((d) => d !== '@awesome-terminal/shared');
+].filter((d) => d !== '@remote-terminal/shared');
 
 // ESM-only packages cannot be require()'d in CJS output — must be bundled, not externalized.
 const esmOnlyDeps = new Set(['electron-store', 'nanoid']);

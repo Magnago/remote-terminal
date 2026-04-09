@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
-import type { RemoteSessionStartPayload, RemoteSessionStopPayload } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
+import type { RemoteSessionStartPayload, RemoteSessionStopPayload } from '@remote-terminal/shared';
 import { WebSocket } from 'ws';
 import { customAlphabet } from 'nanoid';
 import { addPtyExitCallback, addRelayCallback, killPty, resizePty, writeToPty } from '../pty/pty-manager';
@@ -21,7 +21,7 @@ const activeSessions = new Map<string, ActiveSession>();
 
 async function deleteRelaySession(code: string): Promise<void> {
   const configuredRelayUrl =
-    process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
+    process.env.REMOTE_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
   const relayUrl = new URL(configuredRelayUrl);
   try {
     await fetch(`${relayUrl.origin}/api/sessions/${code}`, { method: 'DELETE' });
@@ -30,7 +30,7 @@ async function deleteRelaySession(code: string): Promise<void> {
 
 function getRelayEndpoints(code: string): { browserUrl: string; desktopWsUrl: string } {
   const configuredRelayUrl =
-    process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
+    process.env.REMOTE_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
   const relayUrl = new URL(configuredRelayUrl);
   const wsProtocol = relayUrl.protocol === 'https:' ? 'wss:' : 'ws:';
   const relayOrigin = relayUrl.origin.replace(/\/$/, '');
@@ -63,7 +63,7 @@ export function registerRemoteSessionIpc(_win: BrowserWindow): void {
 
 export function registerDesktopControlClient(win: BrowserWindow): void {
   const configuredRelayUrl =
-    process.env.AWESOME_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
+    process.env.REMOTE_TERMINAL_RELAY_URL || getSettings().remote.relayUrl;
   const relayUrl = new URL(configuredRelayUrl);
   const wsProtocol = relayUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 

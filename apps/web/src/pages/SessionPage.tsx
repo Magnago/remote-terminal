@@ -12,7 +12,7 @@ interface StoredSession {
   label: string;
 }
 
-const STORAGE_KEY = 'awesome-terminal-web-sessions';
+const STORAGE_KEY = 'remote-terminal-web-sessions';
 
 function normalizeCode(value: string): string {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);

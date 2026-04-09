@@ -93,7 +93,7 @@ export function useTerminal({
             } else {
               term.writeln('');
               term.writeln(`\x1b[31mFailed to start relay: is the relay server running?\x1b[0m`);
-              term.writeln(`\x1b[33mStart it with: pnpm --filter @awesome-terminal/relay dev\x1b[0m`);
+              term.writeln(`\x1b[33mStart it with: pnpm --filter @remote-terminal/relay dev\x1b[0m`);
             }
           });
           inputBuffer = '';

@@ -23,7 +23,7 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@awesome-terminal/shared':
+      '@remote-terminal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@electron-toolkit/utils':

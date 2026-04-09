@@ -1,4 +1,4 @@
-const CACHE = 'awesome-terminal-v1';
+const CACHE = 'remote-terminal-v1';
 const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/icon-maskable.svg'];
 
 self.addEventListener('install', (e) => {

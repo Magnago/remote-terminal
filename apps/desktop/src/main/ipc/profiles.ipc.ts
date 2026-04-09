@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
 import { detectProfiles } from '../pty/profiles';
 
 export function registerProfilesIpc(): void {

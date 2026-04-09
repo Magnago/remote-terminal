@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
 import type {
   PtyCreatePayload,
   PtyWritePayload,
@@ -7,8 +7,8 @@ import type {
   PtyKillPayload,
   PtyDataPayload,
   PtyExitPayload,
-} from '@awesome-terminal/shared';
-import type { AppSettings, ShellProfile } from '@awesome-terminal/shared';
+} from '@remote-terminal/shared';
+import type { AppSettings, ShellProfile } from '@remote-terminal/shared';
 
 export type ElectronAPI = typeof api;
 

@@ -33,7 +33,7 @@ export default function TitleBar({ onOpenSettings }: Props): React.JSX.Element {
             fontFamily: 'var(--font-ui)',
           }}
         >
-          Awesome Terminal
+          Remote Terminal
         </span>
       </div>
       <div className="flex items-center" style={{ WebkitAppRegion: 'no-drag' as any }}>

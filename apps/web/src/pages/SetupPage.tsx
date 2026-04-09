@@ -60,7 +60,7 @@ export default function SetupPage(): React.JSX.Element {
     <div style={styles.center}>
       <div style={styles.card}>
         <div style={styles.logo}>&gt;_</div>
-        <h1 style={styles.title}>Awesome Terminal</h1>
+        <h1 style={styles.title}>Remote Terminal</h1>
         <p style={styles.subtitle}>Enter your relay server address</p>
 
         <form onSubmit={handleSubmit} style={styles.form}>

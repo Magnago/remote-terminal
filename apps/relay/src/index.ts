@@ -123,7 +123,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', sessions: sessionMana
 app.get('*', (_req, res) => {
   const webIndex = join(__dirname, '../../web/dist/index.html');
   res.sendFile(webIndex, (err) => {
-    if (err) res.status(200).send('<html><body><h2>Awesome Terminal Relay</h2><p>Web client not built. Run: pnpm --filter @awesome-terminal/web build</p></body></html>');
+    if (err) res.status(200).send('<html><body><h2>Remote Terminal Relay</h2><p>Web client not built. Run: pnpm --filter @remote-terminal/web build</p></body></html>');
   });
 });
 

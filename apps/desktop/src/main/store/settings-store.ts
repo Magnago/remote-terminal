@@ -1,5 +1,5 @@
 import ElectronStore from 'electron-store';
-import type { AppSettings } from '@awesome-terminal/shared';
+import type { AppSettings } from '@remote-terminal/shared';
 
 const defaults: AppSettings = {
   terminal: {

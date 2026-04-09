@@ -49,7 +49,7 @@ if ($existingRelayPids.Count -gt 0) {
     Start-Sleep -Milliseconds 750
   } else {
     Write-Host "Port 3001 is already in use by PID(s): $($existingRelayPids -join ', ')"
-    Write-Host "The process on 3001 is not a healthy Awesome Terminal relay."
+    Write-Host "The process on 3001 is not a healthy Remote Terminal relay."
     Write-Host "Stop that process or run the desktop and relay separately."
     exit 1
   }
@@ -57,7 +57,7 @@ if ($existingRelayPids.Count -gt 0) {
 
 $relay = $null
 $relay = Start-Process -FilePath 'pnpm.cmd' `
-  -ArgumentList '--filter', '@awesome-terminal/relay', 'dev' `
+  -ArgumentList '--filter', '@remote-terminal/relay', 'dev' `
   -WorkingDirectory $root `
   -RedirectStandardOutput $relayOut `
   -RedirectStandardError $relayErr `
@@ -151,7 +151,7 @@ try {
   Write-Host ''
 
   Write-Host 'Starting desktop app...'
-  & pnpm.cmd --filter @awesome-terminal/desktop dev
+  & pnpm.cmd --filter @remote-terminal/desktop dev
   $desktopExitCode = $LASTEXITCODE
   if ($desktopExitCode -ne 0) {
     exit $desktopExitCode

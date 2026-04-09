@@ -1,7 +1,7 @@
 import * as pty from 'node-pty';
 import { WebContents } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
-import type { PtyCreatePayload, PtyDataPayload, PtyExitPayload } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
+import type { PtyCreatePayload, PtyDataPayload, PtyExitPayload } from '@remote-terminal/shared';
 
 type RelayCallback = (data: string) => void;
 

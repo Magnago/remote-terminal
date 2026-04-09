@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
-import type { PtyCreatePayload, PtyWritePayload, PtyResizePayload, PtyKillPayload, PtyDataPayload } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
+import type { PtyCreatePayload, PtyWritePayload, PtyResizePayload, PtyKillPayload, PtyDataPayload } from '@remote-terminal/shared';
 import { createPty, writeToPty, resizePty, killPty } from '../pty/pty-manager';
 import { detectProfiles } from '../pty/profiles';
 import { getSettings } from '../store/settings-store';

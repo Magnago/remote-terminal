@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { IpcChannels } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
 import { getSettings, setSettings } from '../store/settings-store';
-import type { AppSettings } from '@awesome-terminal/shared';
+import type { AppSettings } from '@remote-terminal/shared';
 
 export function registerSettingsIpc(win: BrowserWindow): void {
   ipcMain.handle(IpcChannels.GET_SETTINGS, () => getSettings());

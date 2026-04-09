@@ -1,17 +1,17 @@
 {
-  "name": "awesome-terminal",
+  "name": "remote-terminal",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
     "dev:all": "turbo run dev",
     "build": "turbo run build",
-    "test": "pnpm --filter @awesome-terminal/relay test",
+    "test": "pnpm --filter @remote-terminal/relay test",
     "lint": "turbo run lint",
-    "dev:desktop": "pnpm --filter @awesome-terminal/desktop dev",
-    "dev:relay": "pnpm --filter @awesome-terminal/relay dev",
-    "dev:web": "pnpm --filter @awesome-terminal/web dev",
-    "build:desktop": "pnpm --filter @awesome-terminal/desktop build",
+    "dev:desktop": "pnpm --filter @remote-terminal/desktop dev",
+    "dev:relay": "pnpm --filter @remote-terminal/relay dev",
+    "dev:web": "pnpm --filter @remote-terminal/web dev",
+    "build:desktop": "pnpm --filter @remote-terminal/desktop build",
     "postinstall": "electron-rebuild -f -w node-pty --module-dir apps/desktop"
   },
   "packageManager": "pnpm@9.0.0",

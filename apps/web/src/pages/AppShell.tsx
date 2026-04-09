@@ -50,7 +50,7 @@ export default function AppShell(): React.JSX.Element {
   const activeSession = sessions.find((s) => s.code === activeCode);
 
   useEffect(() => {
-    document.title = activeSession ? `${activeSession.title} — Terminal` : 'Awesome Terminal';
+    document.title = activeSession ? `${activeSession.title} — Terminal` : 'Remote Terminal';
   }, [activeSession]);
 
   const switchSession = useCallback((code: string) => {

@@ -18,7 +18,7 @@ export default function LandingPage(): React.JSX.Element {
           <path d="M10 16l14 8-14 8V16z" fill="white" />
           <path d="M28 30h10" stroke="white" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <h1 style={{ fontSize: 28, fontWeight: 600, color: '#ffffff', marginBottom: 8 }}>Awesome Terminal</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 600, color: '#ffffff', marginBottom: 8 }}>Remote Terminal</h1>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Remote Session Connect</p>
       </div>
 

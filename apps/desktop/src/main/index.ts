@@ -5,7 +5,7 @@ import { registerTerminalIpc } from './ipc/terminal.ipc';
 import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerProfilesIpc } from './ipc/profiles.ipc';
 import { registerDesktopControlClient, registerRemoteSessionIpc } from './ipc/remote-session.ipc';
-import { IpcChannels } from '@awesome-terminal/shared';
+import { IpcChannels } from '@remote-terminal/shared';
 
 // Disable hardware acceleration temporarily to avoid blank window issues
 // app.disableHardwareAcceleration();

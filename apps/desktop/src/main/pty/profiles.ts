@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import type { ShellProfile } from '@awesome-terminal/shared';
+import type { ShellProfile } from '@remote-terminal/shared';
 
 export function detectProfiles(): ShellProfile[] {
   const profiles: ShellProfile[] = [];
