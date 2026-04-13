@@ -28,6 +28,19 @@ try {
     Select-Object -ExpandProperty OwningProcess -Unique)
 } catch {}
 
+$webDistIndex = Join-Path $root 'apps\web\dist\index.html'
+if (-not (Test-Path $webDistIndex)) {
+  Write-Host 'Web client not built. Building it for relay/mobile access...'
+  & pnpm.cmd --filter @remote-terminal/web build
+  $webBuildExitCode = $LASTEXITCODE
+  if ($webBuildExitCode -ne 0) {
+    Write-Host 'Web client build failed. Aborting startup.'
+    exit $webBuildExitCode
+  }
+  Write-Host 'Web client build complete.'
+  Write-Host ''
+}
+
 if ($existingRelayPids.Count -gt 0) {
   $healthyExistingRelay = $false
   try {

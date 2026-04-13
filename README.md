@@ -37,6 +37,8 @@ Run the relay and desktop app together:
 pnpm dev
 ```
 
+`pnpm dev` will build the web client first if `apps/web/dist` is missing, so the relay can serve the mobile/browser UI.
+
 Run individual apps:
 
 ```bash
